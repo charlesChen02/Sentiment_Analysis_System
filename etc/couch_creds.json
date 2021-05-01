@@ -1,0 +1,6 @@
+{
+    "server" : "localhost:3005",
+    "username" : "Administrator",
+    "password" : "",
+    "database" : "twitter"
+}
