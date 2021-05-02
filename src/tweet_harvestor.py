@@ -59,7 +59,7 @@ def couchdb_initializer():
         password = json_object["password"]
         database_name = json_object["database"]
     try:
-        server = Server('https://{username}:{password}@{server}/'.format(server, username, password))
+        server = Server('https://{username}:{password}@{server}/'.format(server_name, username, password))
         return server[database_name]
     except:
         logger.log_error("Cannot find CouchDB Server...")
