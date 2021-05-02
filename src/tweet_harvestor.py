@@ -37,8 +37,9 @@ class CouchStreamListener(tweepy.StreamListener):
         if data[0].isdigit():
             pass
         else:
-            if re.search(KEYWORD_RE, status.text) is not None:
-                json_data = json.loads(data)
+            json_data = json.loads(data)
+            if re.search(KEYWORD_RE, json_data["text"]) is not None:
+                logger.log("New tweet: {}".format(json_data["text"]))
                 self.db.save(json_data)
 
 # Initialize tweepy stream
