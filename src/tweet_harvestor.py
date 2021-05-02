@@ -1,11 +1,11 @@
 import tweepy, couchdb
-import json
+import json, re
 from logger import Logger
 
 KEYS_PATH = "etc/keys_tokens.json"
 COUCH_CREDS_PATH = "etc/couch_creds.json"
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
-FILTER_TERMS = ["Astrazanica"]
+KEYWORD_RE = r'vaccine'
 logger = Logger("tweet_harvestor")
 
 
@@ -29,34 +29,37 @@ class CouchStreamListener(tweepy.StreamListener):
         super().__init__()
         self.db = db
 
-    def on_status(self, status):
-        logger.log("New tweet: {}".format(status.text))
+    # def on_status(self, status):
+    #     if re.search(KEYWORD_RE, status.text) is not None:
+    #         logger.log("New tweet: {}".format(status.text))
 
     def on_data(self, data):
         if data[0].isdigit():
             pass
         else:
-            json_data = json.loads(data)
-            self.db.save(json_data)
+            if re.search(KEYWORD_RE, status.text) is not None:
+                json_data = json.loads(data)
+                self.db.save(json_data)
 
 # Initialize tweepy stream
-def tweepy_stream_initializer(api, db):
+def tweepy_stream_initializer(db):
+    api = tweepy_api_initializer()
     myStreamListener = CouchStreamListener(db)
     stream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
-    logger.log("Twitter stream is initialized.")
-    stream.filter(track=FILTER_TERMS, locations=GEOBOX_AUSTRALIA)
+    logger.log("Tweepy stream is initialized.")
+    stream.filter(locations=GEOBOX_AUSTRALIA)
 
-# Read CouchDB server
+# Connect CouchDB server
 def couchdb_initializer():
     with open(COUCH_CREDS_PATH) as json_file:
         json_object = json.load(json_file)
-        server = json_object["server"]
+        server_name = json_object["server"]
         username = json_object["username"]
         password = json_object["password"]
-        database = json_object["database"]
+        database_name = json_object["database"]
     try:
         server = Server('https://{username}:{password}@{server}/'.format(server, username, password))
-        return server[database]
+        return server[database_name]
     except:
         logger.log_error("Cannot find CouchDB Server...")
         raise
@@ -65,9 +68,7 @@ def couchdb_initializer():
 def run():
     db = couchdb_initializer()
     logger.log("Connected to CouchDB server.")
-    api = tweepy_api_initializer()
-    tweepy_stream_initializer(api, db)
-
+    tweepy_stream_initializer(db)
 
 if __name__ == '__main__':
     run()
