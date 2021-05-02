@@ -2,8 +2,8 @@ import tweepy, couchdb
 import json, re
 from logger import Logger
 
-KEYS_PATH = "etc/keys_tokens.json"
-COUCH_CREDS_PATH = "etc/couch_creds.json"
+KEYS_PATH = 'etc/keys_tokens.json'
+COUCH_CREDS_PATH = 'etc/couch_creds.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
 KEYWORD_RE = r'vaccine'
 logger = Logger("tweet_harvestor")
