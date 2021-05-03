@@ -5,7 +5,7 @@ from logger import Logger
 KEYS_PATH = 'etc/keys_tokens.json'
 COUCH_CREDS_PATH = 'etc/couch_creds.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
-KEYWORD_RE = r'vaccine'
+KEYWORD_RE = r'(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|(dose)|(booster)|(jab)|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
 
 
@@ -45,8 +45,8 @@ class CouchStreamListener(tweepy.StreamListener):
 # Initialize tweepy stream
 def tweepy_stream_initializer(db):
     api = tweepy_api_initializer()
-    myStreamListener = CouchStreamListener(db)
-    stream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
+    couchStreamListener = CouchStreamListener(db)
+    stream = tweepy.Stream(auth=api.auth, listener=couchStreamListener)
     logger.log("Tweepy stream is initialized.")
     stream.filter(locations=GEOBOX_AUSTRALIA)
 
