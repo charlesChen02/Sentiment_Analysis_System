@@ -1,3 +1,4 @@
 .DS_Store
 keys_tokens.json
+formattedTweets.json
 __pycache__
