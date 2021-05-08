@@ -1,3 +1,4 @@
 .DS_Store
+.env
 keys_tokens.json
 __pycache__

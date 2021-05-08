@@ -1,0 +1,11 @@
+version: "3.9"
+services:
+    harvestor:
+        build: tweet-harvestor-docker
+        restart: always
+        environment: 
+            API_KEY: ${API_KEY}
+            API_SECRET_KEY: ${API_SECRET_KEY}
+            ACESS_TOKEN: ${ACESS_TOKEN}
+            ACESS_TOKEN_SECRET: ${ACESS_TOKEN_SECRET}
+            SERVER_ADDRESS: "https://Administrator:AdministratorsPassword@localhost:5984/"
