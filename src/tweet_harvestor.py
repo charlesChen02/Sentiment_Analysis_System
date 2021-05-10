@@ -4,6 +4,7 @@ from logger import Logger
 
 KEYS_PATH = 'etc/keys_tokens.json'
 COUCH_CREDS_PATH = 'etc/couch_creds.json'
+TWEETS_PATH = 'etc/tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
 KEYWORD_RE = r'(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|(dose)|(booster)|(jab)|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
@@ -38,9 +39,12 @@ class CouchStreamListener(tweepy.StreamListener):
             pass
         else:
             json_data = json.loads(data)
-            if re.search(KEYWORD_RE, json_data["text"]) is not None:
+            if re.search(KEYWORD_RE, json_data["text"].lower()) is not None:
                 logger.log("New tweet: {}".format(json_data["text"]))
-                self.db.save(json_data)
+                # self.db.save(json_data)
+                with open(TWEETS_PATH, 'a') as json_file:
+                    json_file.write(data)
+
 
 # Initialize tweepy stream
 def tweepy_stream_initializer(db):
@@ -67,9 +71,9 @@ def couchdb_initializer():
 
 # Entry point
 def run():
-    db = couchdb_initializer()
+    # db = couchdb_initializer()
     logger.log("Connected to CouchDB server.")
-    tweepy_stream_initializer(db)
+    tweepy_stream_initializer(1)
 
 if __name__ == '__main__':
     run()
