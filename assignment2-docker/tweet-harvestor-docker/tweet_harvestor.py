@@ -1,11 +1,11 @@
 import tweepy
-import json, re, os
-from couchdb.client import Server
+import json, re, os, time
+from cloudant.client import CouchDB
 from logger import Logger
 
 TWEETS_PATH = 'tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
-KEYWORD_RE = r'(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|(dose)|(booster)|(jab)|(inoculation)|(immunisation)|(immunization)'
+KEYWORD_RE = r'(az)|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|(dose)|(booster)|(jab)|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
 
 
@@ -26,7 +26,9 @@ class CouchStreamListener(tweepy.StreamListener):
             json_data = json.loads(data)
             if re.search(KEYWORD_RE, json_data["text"].lower()) is not None:
                 logger.log("New tweet: {}".format(json_data["text"]))
-                self.db.save(json_data)
+                with open(TWEETS_PATH, 'a') as tweets_file:
+                    tweets_file.write(data)
+                self.db.create_document(json_data)
 
 
 # Initialize tweepy stream
@@ -40,22 +42,25 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
     stream.filter(locations=GEOBOX_AUSTRALIA)
 
 # Connect CouchDB server
-def couchdb_initializer(couchdb_address):
+def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
     try:
-        server = Server(couchdb_address)
-        print(server.stats())
-        if "tweets" not in server:
-            server.create("tweets")
-        return server["tweets"]
+        client = CouchDB(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
+        if "tweets" not in client:
+            client.create_database("tweets")
+            with open(TWEETS_PATH) as initial_tweets:
+                for tweet in initial_tweets:
+                    client["tweets"].create_document(json.loads(tweet))
+        return client["tweets"]
     except:
         logger.log_error("Cannot find CouchDB Server...")
         raise
 
 # Entry point
-def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_address):
-    db = couchdb_initializer(couchdb_address)
+def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
+    db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
     logger.log("Connected to CouchDB server.")
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
 
 if __name__ == '__main__':
-    run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'], os.environ['SERVER_ADDRESS'])
+    time.sleep(60)
+    run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'], os.environ['SERVER_USERNAME'], os.environ['SERVER_PASSWORD'], os.environ['SERVER_ADDRESS'])
