@@ -45,12 +45,15 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
     try:
         client = CouchDB(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
-        if "tweets" not in client:
-            client.create_database("tweets")
-            with open(TWEETS_PATH) as initial_tweets:
-                for tweet in initial_tweets:
-                    client["tweets"].create_document(json.loads(tweet))
-        return client["tweets"]
+        db = client["tweets"]
+        return db
+    except KeyError:
+        client.create_database("tweets")
+        with open(TWEETS_PATH) as initial_tweets:
+            for tweet in initial_tweets:
+                client["tweets"].create_document(json.loads(tweet))
+        db = client["tweets"]
+        return db
     except:
         logger.log_error("Cannot find CouchDB Server...")
         raise
