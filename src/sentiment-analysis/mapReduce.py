@@ -13,15 +13,3 @@ Reminder: structure of JSON
 
 
 '''
-
-
-# map each key (here doc['location'] for each json) with value 1
-
-@map_function
-def map_loc(doc):
-    emit(doc['location'],1)
-
-
-@reduce_function
-def count_tweet(keys, values, rereduce):
-    return sum(values)
