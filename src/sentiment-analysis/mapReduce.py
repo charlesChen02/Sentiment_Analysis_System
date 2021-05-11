@@ -1,3 +1,5 @@
+from couchdb import Server
+
 from couchview import CouchView
 import couchdb
 
@@ -20,8 +22,8 @@ class CountTypes(CouchView):
     @staticmethod
     def map(doc):
         """ Emit the document type for each document. """
-        if 'doc_type' in doc:
-            yield (doc['country'], 1)
+        if 'country' in doc:
+            yield doc['country'], 1
 
     @staticmethod
     def reduce(keys, values, rereduce):
@@ -29,14 +31,76 @@ class CountTypes(CouchView):
         return sum(values)
 
 
+class CountSentiments(CouchView):
+    """ Count the number of documents available, per type. """
+
+    @staticmethod
+    def map(doc):
+        """ Emit the document type for each document. """
+        if 'city' in doc and 'polarity' in doc:
+            yield doc['city'], doc['polarity']
+
+    @staticmethod
+    def reduce(keys, values, rereduce):
+        """ Sum the values for each type. """
+        return sum(values)
 
 
+class OverallSentiments(CouchView):
+    """ Count the number of documents available, per type. """
 
-# we can simply add extra views inside this array,
+    @staticmethod
+    def map(doc):
+        """ Emit the document type for each document. """
+        if 'country' in doc and 'polarity' in doc:
+            yield doc['country'], doc['polarity']
 
-couch_views = [
-    CountTypes(),
-    # Put other view classes here
-]
+    @staticmethod
+    def reduce(keys, values, rereduce):
+        """ Sum the values for each type. """
+        return sum(values)
 
-couchdb.design.ViewDefinition.sync_many(couchdb, couch_views, remove_missing=True)
+
+class PositiveSentimentPerCity(CouchView):
+    """ Count the number of documents available, per type. """
+
+    @staticmethod
+    def map(doc):
+        """ Emit the document type for each document. """
+        if 'city' in doc and 'polarity' in doc and doc['polarity'] > 0:
+            yield doc['city'], 1
+
+    @staticmethod
+    def reduce(keys, values, rereduce):
+        """ Sum the values for each type. """
+        return sum(values)
+
+
+class NegativeSentimentPerCity(CouchView):
+    """ Count the number of documents available, per type. """
+
+    @staticmethod
+    def map(doc):
+        """ Emit the document type for each document. """
+        if 'city' in doc and 'polarity' in doc and doc['polarity'] < 0:
+            yield doc['city'], 1
+
+    @staticmethod
+    def reduce(keys, values, rereduce):
+        """ Sum the values for each type. """
+        return sum(values)
+
+
+class NeutrarlSentimentPerCity(CouchView):
+    """ Count the number of documents available, per type. """
+
+    @staticmethod
+    def map(doc):
+        """ Emit the document type for each document. """
+        if 'city' in doc and 'polarity' in doc and doc['polarity'] == 0:
+            yield doc['city'], 1
+
+    @staticmethod
+    def reduce(keys, values, rereduce):
+        """ Sum the values for each type. """
+        return sum(values)

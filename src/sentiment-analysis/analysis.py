@@ -1,9 +1,11 @@
+from couchdb import Server
 from textblob import TextBlob
+import couchdb.design
 import json
 import os
 import requests
 import couchdb
-
+from mapReduce import *
 WRITE_PATH = "../../etc/formattedTweets.json"
 READ_PATH = "../../etc/example.json"
 NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
@@ -58,11 +60,34 @@ def clearoutput():
 
 def run():
     clearoutput()
+    # we can simply add extra views inside this array,
+
+    # those views would only be computed when queried
+    couch_views = [
+        CountTypes(),
+        CountSentiments(),
+        OverallSentiments(),
+        PositiveSentimentPerCity(),
+        NegativeSentimentPerCity(),
+        NeutrarlSentimentPerCity(),
+        # Put other view classes here
+    ]
+
+    server = Server(url)
+    try:
+        db = server["parsed-tweets"]
+    except KeyError:
+        db = server.create("parsed-tweets")
+
+    # Current logic: open json from READ_PATH and save into couchdb
     with open(READ_PATH, 'r') as f:
         for index, line in enumerate(f):
             # Ignore the first line or stop once we reach the end
             tweet = json.loads(line[:-1])
             # Get just the text and coordinates
-            tweet = reformattweet(tweet)
+            ftweet = reformattweet(tweet)
+            db.save(ftweet)
+    couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
+
 
 run()

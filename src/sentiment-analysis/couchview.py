@@ -2,6 +2,7 @@ from couchdb.design import ViewDefinition
 import inflection
 import sys
 
+
 class CouchView(ViewDefinition):
     """
     A base class for couch views that handles the magic of instantiation.
