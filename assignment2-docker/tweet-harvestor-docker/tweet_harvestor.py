@@ -5,7 +5,7 @@ from logger import Logger
 
 TWEETS_PATH = 'tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
-KEYWORD_RE = r'(az)|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|(dose)|(booster)|(jab)|(inoculation)|(immunisation)|(immunization)'
+KEYWORD_RE = r'( az )|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|( dose )|(booster)|( jab )|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
 
 
