@@ -10,10 +10,10 @@ services:
         build: tweet-harvestor-docker
         restart: always
         environment: 
-            API_KEY: ${API_KEY}
-            API_SECRET_KEY: ${API_SECRET_KEY}
-            ACESS_TOKEN: ${ACESS_TOKEN}
-            ACESS_TOKEN_SECRET: ${ACESS_TOKEN_SECRET}
+            API_KEY: 7Kb0DSktA5vP2dsRiXKGcJw1t
+            API_SECRET_KEY: Yqsr7kywD8lFbjKsys8LK44NlRu4xCFcfHvYIDmrhjOfHXjaZS
+            ACESS_TOKEN: 1390939348493737986-AZ8bWljl4EkdzHoV890q0lHxR1hhla
+            ACESS_TOKEN_SECRET: Qb6UJTHWhoEg5PvNcxyAUKjhMnwWTqw7HC1MN9tY0NF86
             SERVER_USERNAME: admin
             SERVER_PASSWORD: couchdb
             SERVER_ADDRESS: "http://couchdb:5984"
