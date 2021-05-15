@@ -16,91 +16,84 @@ Reminder: structure of JSON
 '''
 
 
-class CountTypes(CouchView):
-    """ Count the number of documents available, per type. """
+class CountTotal(CouchView):
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'country' in doc:
-            yield doc['country'], 1
+    map = '''
+    function (doc) {
+        emit(doc['country'], 1);
+    }
+    '''
 
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    reduce = '''
+        _sum
+    '''
 
 
-class CountSentiments(CouchView):
-    """ Count the number of documents available, per type. """
+class CitySentiments(CouchView):
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'city' in doc and 'polarity' in doc:
-            yield doc['city'], doc['polarity']
+    map = '''
+    function (doc) {
+        emit(doc['location'], doc['polarity']);
+    }   
+    '''
 
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    reduce = '''
+        _sum
+        '''
 
 
 class OverallSentiments(CouchView):
-    """ Count the number of documents available, per type. """
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'country' in doc and 'polarity' in doc:
-            yield doc['country'], doc['polarity']
-
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    map = '''
+    function (doc) {
+        emit(doc['country'], doc['polarity']);
+    }
+    '''
+    reduce = '''
+        _sum
+    '''
 
 
 class PositiveSentimentPerCity(CouchView):
-    """ Count the number of documents available, per type. """
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'city' in doc and 'polarity' in doc and doc['polarity'] > 0:
-            yield doc['city'], 1
+    map = '''
+    function (doc) {
+        if (doc['polarity'] > 0) {
+            emit(doc['location'], 1);
+        }
+    }       
+    '''
 
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    reduce = '''
+        _sum
+    '''
 
 
 class NegativeSentimentPerCity(CouchView):
-    """ Count the number of documents available, per type. """
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'city' in doc and 'polarity' in doc and doc['polarity'] < 0:
-            yield doc['city'], 1
+    map = '''
+    function (doc) {
+        if (doc['polarity'] < 0) {
+            emit(doc['location'], 1);
+        }
+    }       
+    '''
 
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    reduce = '''
+        _sum
+    '''
 
 
 class NeutrarlSentimentPerCity(CouchView):
     """ Count the number of documents available, per type. """
+    map = '''
+    function (doc) {
+        if (doc['polarity'] < 0) {
+            emit(doc['location'], 1);
+        }
+    }       
+    '''
 
-    @staticmethod
-    def map(doc):
-        """ Emit the document type for each document. """
-        if 'city' in doc and 'polarity' in doc and doc['polarity'] == 0:
-            yield doc['city'], 1
-
-    @staticmethod
-    def reduce(keys, values, rereduce):
-        """ Sum the values for each type. """
-        return sum(values)
+    reduce = '''
+        _sum
+    '''

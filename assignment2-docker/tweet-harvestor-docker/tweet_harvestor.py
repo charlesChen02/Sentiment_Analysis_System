@@ -2,12 +2,13 @@ import tweepy
 import json, re, os, time
 from cloudant.client import CouchDB
 from logger import Logger
+from textblob import TextBlob
 
 TWEETS_PATH = 'tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
 KEYWORD_RE = r'( az )|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|( dose )|(booster)|( jab )|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
-
+NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
 
 # Subclass StreamListener
 class CouchStreamListener(tweepy.StreamListener):
@@ -30,6 +31,38 @@ class CouchStreamListener(tweepy.StreamListener):
                     tweets_file.write(data)
                 self.db.create_document(json_data)
 
+def reformattweet(tweet):
+    ftweet = {}
+    for feature in NECESSARY_CONTENTS:
+        if feature == "place":
+            tmp = tweet[feature]
+            ftweet["location"] = tmp["full_name"]
+            ftweet["country"] = tmp["country"]
+            ftweet["bounding_box"] = {}
+            for index, coord in enumerate(tmp["bounding_box"]["coordinates"][0]):
+
+                if index == 0:
+                    ftweet["bounding_box"]["xmin"] = coord[0]
+                    ftweet["bounding_box"]["ymin"] = coord[1]
+                elif index == 2:
+                    ftweet["bounding_box"]["xmax"] = coord[0]
+                    ftweet["bounding_box"]["ymax"] = coord[1]
+            continue
+        ftweet[feature] = tweet[feature]
+    words = ftweet['text'].split()
+
+    blob = TextBlob(ftweet["text"])
+    ftweet["polarity"] = blob.sentiment.polarity
+    ftweet["subjectivity"] = blob.sentiment.subjectivity
+
+    # ftweet = json.dumps(ftweet)
+
+    # with open(WRITE_PATH, 'w') as f:
+    #     f.write(ftweet + '\n')
+
+    # postTweet()
+
+    return ftweet
 
 # Initialize tweepy stream
 def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db):
@@ -51,6 +84,7 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
         client.create_database("tweets")
         with open(TWEETS_PATH) as initial_tweets:
             for tweet in initial_tweets:
+                tweet = reformattweet(tweet)
                 client["tweets"].create_document(json.loads(tweet))
         db = client["tweets"]
         return db

@@ -1,3 +1,5 @@
+from time import sleep
+
 from couchdb import Server
 from textblob import TextBlob
 import couchdb.design
@@ -6,11 +8,16 @@ import os
 import requests
 import couchdb
 from mapReduce import *
-WRITE_PATH = "../../etc/formattedTweets.json"
-READ_PATH = "../../etc/example.json"
-NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
-url = 'https://localhost:5984/exampledb'
 
+WRITE_PATH = "../../etc/formattedTweet.json"
+READ_PATH = "../../assignment2-docker/tweet-harvestor-docker/tweets.json"
+
+NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
+# url = os.environ['SERVER_ADDRESS']
+
+url = 'http://admin:couchdb@localhost:5984/'
+AZ_KEYS = set()
+PZ_KEYS = set()
 
 '''
 Input: 
@@ -39,13 +46,16 @@ def reformattweet(tweet):
                     ftweet["bounding_box"]["ymax"] = coord[1]
             continue
         ftweet[feature] = tweet[feature]
+    words = ftweet['text'].split()
 
     blob = TextBlob(ftweet["text"])
     ftweet["polarity"] = blob.sentiment.polarity
     ftweet["subjectivity"] = blob.sentiment.subjectivity
-    ftweet = json.dumps(ftweet)
-    with open(WRITE_PATH, 'w') as f:
-        f.write(ftweet + '\n')
+
+    # ftweet = json.dumps(ftweet)
+
+    # with open(WRITE_PATH, 'w') as f:
+    #     f.write(ftweet + '\n')
 
     # postTweet()
 
@@ -64,8 +74,8 @@ def run():
 
     # those views would only be computed when queried
     couch_views = [
-        CountTypes(),
-        CountSentiments(),
+        CountTotal(),
+        CitySentiments(),
         OverallSentiments(),
         PositiveSentimentPerCity(),
         NegativeSentimentPerCity(),
@@ -73,21 +83,33 @@ def run():
         # Put other view classes here
     ]
 
-    server = Server(url)
+    server = Server(url=url)
+    # try:
+    #     db = server["parsed-tweets"]
+    # except KeyError:
+    print("Connected to Server")
     try:
         db = server["parsed-tweets"]
-    except KeyError:
+    except:
         db = server.create("parsed-tweets")
-
+    print("create db successful")
     # Current logic: open json from READ_PATH and save into couchdb
-    with open(READ_PATH, 'r') as f:
-        for index, line in enumerate(f):
-            # Ignore the first line or stop once we reach the end
-            tweet = json.loads(line[:-1])
-            # Get just the text and coordinates
-            ftweet = reformattweet(tweet)
-            db.save(ftweet)
+    # with open(READ_PATH, 'r') as f:
+    #     for index, line in enumerate(f):
+    #         # Ignore the first line or stop once we reach the end
+    #         tweet = json.loads(line[:-1])
+    #         # Get just the text and coordinates
+    #         ftweet = reformattweet(tweet)
+    #         # with open(WRITE_PATH, 'r') as doc:
+    #         #     db.save(doc)
+    #         # print(ftweet)
+    #         # break
+    #         print(ftweet)
+    #         db.save(ftweet)
+    #         print("save successful")
+    #         sleep(2)
     couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
+    print("Views Created")
 
 
 run()

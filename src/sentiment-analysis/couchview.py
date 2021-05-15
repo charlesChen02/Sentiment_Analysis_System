@@ -28,9 +28,9 @@ class CouchView(ViewDefinition):
             reduce_fun = None
 
         super_args = (design_name,
-                        inflection.underscore(self.__class__.__name__),
-                        map_fun,
-                        reduce_fun,
-                        'python')
+                      inflection.underscore(self.__class__.__name__),
+                      map_fun,
+                      reduce_fun,
+                      'javascript')
 
         super(CouchView, self).__init__(*super_args)
