@@ -104,12 +104,12 @@ def run():
         SentiByCityAndDate(),
         StrongPositiveSentimentPerCity(),
         StrongNegativeSentimentPerCity(),
+        OverallStateSentiments(),
         # Put other view classes here
     ]
 
     server = Server(url=URL)
     print("Connected to Server")
-
     try:
         db = server[DB_NAME]
     except:

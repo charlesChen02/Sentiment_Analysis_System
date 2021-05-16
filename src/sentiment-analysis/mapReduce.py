@@ -61,6 +61,16 @@ class OverallSentiments(CouchView):
     reduce = '''
         _stats
     '''
+class OverallStateSentiments(CouchView):
+
+    map = '''
+    function (doc) {
+        emit(doc['state'], doc['polarity']);
+    }
+    '''
+    reduce = '''
+        _stats
+    '''
 
 
 class PositiveSentimentPerCity(CouchView):
