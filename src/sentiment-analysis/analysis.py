@@ -1,6 +1,6 @@
 from time import sleep
 
-from couchdb import Server
+from couchdb import Server, PreconditionFailed
 from textblob import TextBlob
 import couchdb.design
 import json
@@ -12,10 +12,15 @@ from mapReduce import *
 WRITE_PATH = "../../etc/formattedTweet.json"
 READ_PATH = "../../assignment2-docker/tweet-harvestor-docker/tweets.json"
 
-NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
-# url = os.environ['SERVER_ADDRESS']
+DUP_VIEW_ADDR = 'http://admin:couchdb@localhost:5984/parsed-tweets/_design/mapReduce/_view/dup_count'
+DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
 
-url = 'http://admin:couchdb@localhost:5984/'
+suffix = '\"%5D&reduce=true&group=true'
+
+DUP_ACT_GETID = DUP_VIEW_ADDR + '?reduce=true&group_level=2'
+NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
+DB_NAME = "parsed-tweets"
+URL = 'http://admin:couchdb@localhost:5984/'
 AZ_KEYS = set()
 PZ_KEYS = set()
 
@@ -31,6 +36,9 @@ Output:
 def reformattweet(tweet):
     ftweet = {}
     for feature in NECESSARY_CONTENTS:
+        if feature == 'created_at':
+            date_arr = tweet[feature].split()
+            ftweet['date'] = date_arr[1] + ' ' + date_arr[2]
         if feature == "place":
             tmp = tweet[feature]
             ftweet["location"] = tmp["full_name"]
@@ -46,18 +54,24 @@ def reformattweet(tweet):
                     ftweet["bounding_box"]["ymax"] = coord[1]
             continue
         ftweet[feature] = tweet[feature]
-    words = ftweet['text'].split()
 
+    # keywords evaluation
+    ftweet['tags'] = []
+    words = ftweet['text'].split()
+    for w in words:
+        if w in AZ_KEYS:
+            ftweet['tags'].append('AZ')
+        if w in PZ_KEYS:
+            ftweet['tags'].append('PZ')
+
+    # Sentiment analysis
     blob = TextBlob(ftweet["text"])
     ftweet["polarity"] = blob.sentiment.polarity
     ftweet["subjectivity"] = blob.sentiment.subjectivity
 
-    # ftweet = json.dumps(ftweet)
-
+    # Alternative: Add parsed tweet to local disk
     # with open(WRITE_PATH, 'w') as f:
     #     f.write(ftweet + '\n')
-
-    # postTweet()
 
     return ftweet
 
@@ -71,45 +85,50 @@ def clearoutput():
 def run():
     clearoutput()
     # we can simply add extra views inside this array,
-
-    # those views would only be computed when queried
     couch_views = [
         CountTotal(),
         CitySentiments(),
         OverallSentiments(),
         PositiveSentimentPerCity(),
         NegativeSentimentPerCity(),
-        NeutrarlSentimentPerCity(),
+        NeutralSentimentPerCity(),
+        SentiByCityAndDate(),
+        StrongPositiveSentimentPerCity(),
+        StrongNegativeSentimentPerCity(),
         # Put other view classes here
     ]
 
-    server = Server(url=url)
-    # try:
-    #     db = server["parsed-tweets"]
-    # except KeyError:
+    server = Server(url=URL)
     print("Connected to Server")
+
     try:
-        db = server["parsed-tweets"]
+        db = server[DB_NAME]
     except:
-        db = server.create("parsed-tweets")
+        db = server.create(DB_NAME)
     print("create db successful")
+    couchdb.design.ViewDefinition.sync(DupCount(),db)
     # Current logic: open json from READ_PATH and save into couchdb
-    # with open(READ_PATH, 'r') as f:
-    #     for index, line in enumerate(f):
-    #         # Ignore the first line or stop once we reach the end
-    #         tweet = json.loads(line[:-1])
-    #         # Get just the text and coordinates
-    #         ftweet = reformattweet(tweet)
-    #         # with open(WRITE_PATH, 'r') as doc:
-    #         #     db.save(doc)
-    #         # print(ftweet)
-    #         # break
-    #         print(ftweet)
-    #         db.save(ftweet)
-    #         print("save successful")
-    #         sleep(2)
+    with open(READ_PATH, 'r') as f:
+        for index, line in enumerate(f):
+            # Ignore the first line or stop once we reach the end
+            tweet = json.loads(line[:-1])
+            # Get just the text and coordinates
+            ftweet = reformattweet(tweet)
+            # Alternative: Save parsed tweets to local disk
+            # with open(WRITE_PATH, 'r') as doc:
+            #     db.save(doc)
+            # print(ftweet)
+
+            # duplication prevention
+            dup_url = DUP_ACT_GETIDSTR + ftweet['id_str'] + suffix
+            r = requests.get(url=dup_url)
+            resp = dict(r.json())['rows']
+            if resp == []:
+                db.save(ftweet)
+            # sleep(1)
+    print("save successful")
+
     couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
     print("Views Created")
-
 
 run()
