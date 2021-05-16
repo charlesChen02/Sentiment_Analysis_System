@@ -15,10 +15,6 @@ class CouchStreamListener(tweepy.StreamListener):
         super().__init__()
         self.db = db
 
-    # def on_status(self, status):
-    #     if re.search(KEYWORD_RE, status.text) is not None:
-    #         logger.log("New tweet: {}".format(status.text))
-
     def on_data(self, data):
         if data[0].isdigit():
             pass
@@ -28,7 +24,7 @@ class CouchStreamListener(tweepy.StreamListener):
                 logger.log("New tweet: {}".format(json_data["text"]))
                 with open(TWEETS_PATH, 'a') as tweets_file:
                     tweets_file.write(data)
-                self.db.create_document(json_data)
+                # self.db.create_document(json_data)
 
 
 # Initialize tweepy stream
@@ -45,14 +41,14 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
     try:
         client = CouchDB(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
-        db = client["tweets"]
-        return db
-    except KeyError:
-        client.create_database("tweets")
-        with open(TWEETS_PATH) as initial_tweets:
-            for tweet in initial_tweets:
-                client["tweets"].create_document(json.loads(tweet))
-        db = client["tweets"]
+        try:
+            db = client["tweets"]
+        except KeyError:
+            client.create_database("tweets")
+            with open(TWEETS_PATH) as initial_tweets:
+                for tweet in initial_tweets:
+                    client["tweets"].create_document(json.loads(tweet))
+            db = client["tweets"]
         return db
     except:
         logger.log_error("Cannot find CouchDB Server...")
@@ -60,9 +56,9 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
-    db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
+    # db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
     logger.log("Connected to CouchDB server.")
-    tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
+    tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, 1)
 
 if __name__ == '__main__':
     time.sleep(60)
