@@ -139,7 +139,7 @@ class SentiByCityAndDate(CouchView):
 
     map = '''
     function (doc) {
-        emit([doc['location'], doc['date']], doc['polarity']);
+        emit([doc['state'], doc['date'], doc['city']], doc['polarity']);
     }     
     '''
 
@@ -148,7 +148,7 @@ class SentiByCityAndDate(CouchView):
           if (rereduce) {
             return sum(values);
           } else {
-            return values.length;
+            return sum(values);
           }
         }
     '''

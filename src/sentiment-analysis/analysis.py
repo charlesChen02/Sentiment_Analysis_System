@@ -42,6 +42,15 @@ def reformattweet(tweet):
         if feature == "place":
             tmp = tweet[feature]
             ftweet["location"] = tmp["full_name"]
+            locs = ftweet['location'].split(',')
+            # print(locs)
+            if len(locs) == 2:
+                ftweet['state'] = ftweet['location'].split(',')[1]
+                ftweet['city'] = ftweet['location'].split(',')[0]
+            else:
+                ftweet['state'] = ftweet['location']
+                ftweet['city'] = ftweet['location']
+
             ftweet["country"] = tmp["country"]
             ftweet["bounding_box"] = {}
             for index, coord in enumerate(tmp["bounding_box"]["coordinates"][0]):
