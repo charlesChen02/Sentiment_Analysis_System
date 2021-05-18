@@ -9,6 +9,9 @@ GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
 KEYWORD_RE = r'( az )|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|( dose )|(booster)|( jab )|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
 NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
+AZ_KEYS = set()
+PZ_KEYS = set()
+DB_NAME = "parsed-tweets"
 
 # Subclass StreamListener
 class CouchStreamListener(tweepy.StreamListener):
@@ -31,12 +34,25 @@ class CouchStreamListener(tweepy.StreamListener):
                     tweets_file.write(data)
                 self.db.create_document(json_data)
 
+
 def reformattweet(tweet):
     ftweet = {}
     for feature in NECESSARY_CONTENTS:
+        if feature == 'created_at':
+            date_arr = tweet[feature].split()
+            ftweet['date'] = date_arr[1] + ' ' + date_arr[2]
         if feature == "place":
             tmp = tweet[feature]
             ftweet["location"] = tmp["full_name"]
+            locs = ftweet['location'].split(',')
+            # print(locs)
+            if len(locs) == 2:
+                ftweet['state'] = ftweet['location'].split(',')[1]
+                ftweet['city'] = ftweet['location'].split(',')[0]
+            else:
+                ftweet['state'] = ftweet['location']
+                ftweet['city'] = ftweet['location']
+
             ftweet["country"] = tmp["country"]
             ftweet["bounding_box"] = {}
             for index, coord in enumerate(tmp["bounding_box"]["coordinates"][0]):
@@ -49,18 +65,24 @@ def reformattweet(tweet):
                     ftweet["bounding_box"]["ymax"] = coord[1]
             continue
         ftweet[feature] = tweet[feature]
-    words = ftweet['text'].split()
 
+    # keywords evaluation
+    ftweet['tags'] = []
+    words = ftweet['text'].split()
+    for w in words:
+        if w in AZ_KEYS:
+            ftweet['tags'].append('AZ')
+        if w in PZ_KEYS:
+            ftweet['tags'].append('PZ')
+
+    # Sentiment analysis
     blob = TextBlob(ftweet["text"])
     ftweet["polarity"] = blob.sentiment.polarity
     ftweet["subjectivity"] = blob.sentiment.subjectivity
 
-    # ftweet = json.dumps(ftweet)
-
+    # Alternative: Add parsed tweet to local disk
     # with open(WRITE_PATH, 'w') as f:
     #     f.write(ftweet + '\n')
-
-    # postTweet()
 
     return ftweet
 
@@ -78,15 +100,15 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
     try:
         client = CouchDB(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
-        db = client["tweets"]
+        db = client[DB_NAME]
         return db
     except KeyError:
-        client.create_database("tweets")
+        client.create_database(DB_NAME)
         with open(TWEETS_PATH) as initial_tweets:
             for tweet in initial_tweets:
                 tweet = reformattweet(tweet)
-                client["tweets"].create_document(json.loads(tweet))
-        db = client["tweets"]
+                client[DB_NAME].create_document(json.loads(tweet))
+        db = client[DB_NAME]
         return db
     except:
         logger.log_error("Cannot find CouchDB Server...")
