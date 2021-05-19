@@ -37,17 +37,40 @@ class CouchStreamListener(tweepy.StreamListener):
             json_data = json.loads(data)
             if re.search(KEYWORD_RE, json_data["text"].lower()) is not None:
                 logger.log("New tweet: {}".format(json_data["text"]))
-
                 with open(TWEETS_PATH, 'a') as tweets_file:
                     tweets_file.write(data)
+
                 ftweet = reformattweet(json_data)
+
+                # duplication avoidance
                 dup_url = DUP_ACT_GETIDSTR + ftweet['id_str'] + suffix
                 r = requests.get(url=dup_url)
                 resp = dict(r.json())['rows']
-                if resp == []:
+                if not resp:
                     self.db.save(ftweet)
+                    callSync(self.db)
+
             else:
                 logger.log("New invalid tweet: {}".format(json_data["text"]))
+
+
+def callSync(db):
+    couch_views = [
+        DupCount(),
+        CountTotal(),
+        CitySentiments(),
+        OverallSentiments(),
+        PositiveSentimentPerCity(),
+        NegativeSentimentPerCity(),
+        NeutralSentimentPerCity(),
+        SentiByCityAndDate(),
+        StrongPositiveSentimentPerCity(),
+        StrongNegativeSentimentPerCity(),
+        OverallStateSentiments(),
+        # Put other view classes here
+    ]
+    couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
+
 
 
 def reformattweet(tweet):
@@ -139,22 +162,7 @@ def run(consumer_key, consumer_secret, access_token, access_token_secret, couchd
     db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
     couchdb.design.ViewDefinition.sync(DupCount(), db)
     logger.log("Connected to CouchDB server.")
-
-    couch_views = [
-        CountTotal(),
-        CitySentiments(),
-        OverallSentiments(),
-        PositiveSentimentPerCity(),
-        NegativeSentimentPerCity(),
-        NeutralSentimentPerCity(),
-        SentiByCityAndDate(),
-        StrongPositiveSentimentPerCity(),
-        StrongNegativeSentimentPerCity(),
-        OverallStateSentiments(),
-        # Put other view classes here
-    ]
-    couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
-
+    callSync(db)
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
 
 if __name__ == '__main__':
