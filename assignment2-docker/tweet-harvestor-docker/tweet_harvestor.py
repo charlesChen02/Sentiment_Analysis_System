@@ -1,8 +1,11 @@
+import couchdb
 import tweepy
 import json, re, os, time
 from cloudant.client import CouchDB
 from logger import Logger
 from textblob import TextBlob
+from mapReduce import *
+import requests
 
 TWEETS_PATH = 'tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
@@ -12,6 +15,12 @@ NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
 AZ_KEYS = set()
 PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
+suffix = '\"%5D&reduce=true&group=true'
+DUP_VIEW_ADDR = 'http://admin:couchdb@localhost:5984/parsed-tweets/_design/mapReduce/_view/dup_count'
+DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
+
+
+
 
 # Subclass StreamListener
 class CouchStreamListener(tweepy.StreamListener):
@@ -32,7 +41,12 @@ class CouchStreamListener(tweepy.StreamListener):
                 logger.log("New tweet: {}".format(json_data["text"]))
                 with open(TWEETS_PATH, 'a') as tweets_file:
                     tweets_file.write(data)
-                self.db.create_document(json_data)
+                ftweet = reformattweet(json_data)
+                dup_url = DUP_ACT_GETIDSTR + ftweet['id_str'] + suffix
+                r = requests.get(url=dup_url)
+                resp = dict(r.json())['rows']
+                if resp == []:
+                    self.db.create_document(ftweet)
 
 
 def reformattweet(tweet):
@@ -117,7 +131,23 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
     db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
+    couchdb.design.ViewDefinition.sync(DupCount(), db)
     logger.log("Connected to CouchDB server.")
+    couch_views = [
+        CountTotal(),
+        CitySentiments(),
+        OverallSentiments(),
+        PositiveSentimentPerCity(),
+        NegativeSentimentPerCity(),
+        NeutralSentimentPerCity(),
+        SentiByCityAndDate(),
+        StrongPositiveSentimentPerCity(),
+        StrongNegativeSentimentPerCity(),
+        OverallStateSentiments(),
+        # Put other view classes here
+    ]
+    couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
+
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
 
 if __name__ == '__main__':

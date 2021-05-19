@@ -1,7 +1,4 @@
-from couchdb import Server
-
 from couchview import CouchView
-import couchdb
 
 '''
 Reminder: structure of JSON
