@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+    couchdb:
+        image: bitnami/couchdb
+        restart: always
+        ports:
+            - "5984:5984"
+
+    harvestor:
+        build: tweet-harvestor-docker
+        restart: always
+        environment: 
+            API_KEY: 7Kb0DSktA5vP2dsRiXKGcJw1t
+            API_SECRET_KEY: Yqsr7kywD8lFbjKsys8LK44NlRu4xCFcfHvYIDmrhjOfHXjaZS
+            ACESS_TOKEN: 1390939348493737986-AZ8bWljl4EkdzHoV890q0lHxR1hhla
+            ACESS_TOKEN_SECRET: Qb6UJTHWhoEg5PvNcxyAUKjhMnwWTqw7HC1MN9tY0NF86
+            SERVER_USERNAME: admin
+            SERVER_PASSWORD: couchdb
+            SERVER_ADDRESS: "http://couchdb:5984"
