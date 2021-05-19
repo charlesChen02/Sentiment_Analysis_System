@@ -1,2 +1,2 @@
-tweepy
-cloudant
+tweepy==3.10.0
+cloudant==2.14.0
