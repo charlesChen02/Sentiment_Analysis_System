@@ -6,6 +6,8 @@ from logger import Logger
 from textblob import TextBlob
 from mapReduce import *
 import requests
+import couchdb.design
+from couchdb import Server
 
 TWEETS_PATH = 'tweets.json'
 GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
@@ -16,7 +18,7 @@ AZ_KEYS = set()
 PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
 suffix = '\"%5D&reduce=true&group=true'
-
+URL = 'http://admin:couchdb@couchdb:5984/'
 DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_ADDRESS']+'/parsed-tweets/_design/mapReduce/_view/dup_count'
 DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
 
@@ -36,6 +38,7 @@ class CouchStreamListener(tweepy.StreamListener):
             json_data = json.loads(data)
             if re.search(KEYWORD_RE, json_data["text"].lower()) is not None:
                 logger.log("New tweet: {}".format(json_data["text"]))
+
                 with open(TWEETS_PATH, 'a') as tweets_file:
                     tweets_file.write(data)
                 ftweet = reformattweet(json_data)
@@ -43,7 +46,7 @@ class CouchStreamListener(tweepy.StreamListener):
                 r = requests.get(url=dup_url)
                 resp = dict(r.json())['rows']
                 if resp == []:
-                    self.db.create_document(ftweet)
+                    self.db.save(ftweet)
 
 
 def reformattweet(tweet):
@@ -113,22 +116,21 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
 
 # Connect CouchDB server
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
+    # client = server(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
+    server = Server(url=URL)
     try:
-        client = CouchDB(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
-
-        db = client[DB_NAME]
-        return db
-    except KeyError:
-        client.create_database(DB_NAME)
-        with open(TWEETS_PATH) as initial_tweets:
-            for tweet in initial_tweets:
-                tweet = reformattweet(tweet)
-                client[DB_NAME].create_document(json.loads(tweet))
-        db = client[DB_NAME]
-        return db
+        db = server[DB_NAME]
+        # return db
     except:
-        logger.log_error("Cannot find CouchDB Server...")
-        raise
+        db = server.create(DB_NAME)
+        with open(TWEETS_PATH, 'r') as initial_tweets:
+            for line in initial_tweets:
+                tweet = json.loads(line[:-1])
+                tweet = reformattweet(tweet)
+                db.save(tweet)
+        # db = server[DB_NAME]
+
+    return db
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
