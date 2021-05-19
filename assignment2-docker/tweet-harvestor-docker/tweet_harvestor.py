@@ -16,7 +16,8 @@ AZ_KEYS = set()
 PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
 suffix = '\"%5D&reduce=true&group=true'
-DUP_VIEW_ADDR = 'http://admin:couchdb@localhost:5984/parsed-tweets/_design/mapReduce/_view/dup_count'
+
+DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_ADDRESS']+'/parsed-tweets/_design/mapReduce/_view/dup_count'
 DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
 
 
@@ -131,6 +132,7 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
+    time.sleep(30)
     db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
     couchdb.design.ViewDefinition.sync(DupCount(), db)
     logger.log("Connected to CouchDB server.")
