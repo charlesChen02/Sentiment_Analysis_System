@@ -1,7 +1,6 @@
 import couchdb
 import tweepy
 import json, re, os, time
-from cloudant.client import CouchDB
 from logger import Logger
 from textblob import TextBlob
 from mapReduce import *
@@ -47,6 +46,8 @@ class CouchStreamListener(tweepy.StreamListener):
                 resp = dict(r.json())['rows']
                 if resp == []:
                     self.db.save(ftweet)
+            else:
+                logger.log("New invalid tweet: {}".format(json_data["text"]))
 
 
 def reformattweet(tweet):
@@ -116,21 +117,21 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
 
 # Connect CouchDB server
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
-    # client = server(couchdb_username, couchdb_password, url=couchdb_address, connect=True)
-    server = Server(url=URL)
     try:
-        db = server[DB_NAME]
-        # return db
+        server = Server(url=URL)
+        try:
+            db = server[DB_NAME]
+        except:
+            db = server.create(DB_NAME)
+            with open(TWEETS_PATH, 'r') as initial_tweets:
+                for line in initial_tweets:
+                    tweet = json.loads(line[:-1])
+                    tweet = reformattweet(tweet)
+                    db.save(tweet)
+        return db
     except:
-        db = server.create(DB_NAME)
-        with open(TWEETS_PATH, 'r') as initial_tweets:
-            for line in initial_tweets:
-                tweet = json.loads(line[:-1])
-                tweet = reformattweet(tweet)
-                db.save(tweet)
-        # db = server[DB_NAME]
-
-    return db
+        logger.log_error("Cannot find CouchDB Server...")
+        raise
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
