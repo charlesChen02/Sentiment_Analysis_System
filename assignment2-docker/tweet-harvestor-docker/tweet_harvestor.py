@@ -24,7 +24,7 @@ class CouchStreamListener(tweepy.StreamListener):
                 logger.log("New tweet: {}".format(json_data["text"]))
                 with open(TWEETS_PATH, 'a') as tweets_file:
                     tweets_file.write(data)
-                # self.db.create_document(json_data)
+                self.db.create_document(json_data)
 
 
 # Initialize tweepy stream
@@ -35,7 +35,11 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
     couchStreamListener = CouchStreamListener(db)
     stream = tweepy.Stream(auth=api.auth, listener=couchStreamListener)
     logger.log("Tweepy stream is initialized.")
-    stream.filter(locations=GEOBOX_AUSTRALIA)
+    while(True):
+        try:
+            stream.filter(locations=GEOBOX_AUSTRALIA)
+        except:
+            pass
 
 # Connect CouchDB server
 def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
@@ -56,10 +60,9 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
-    # db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
+    db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
     logger.log("Connected to CouchDB server.")
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, 1)
 
 if __name__ == '__main__':
-    time.sleep(60)
     run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'], os.environ['SERVER_USERNAME'], os.environ['SERVER_PASSWORD'], os.environ['SERVER_ADDRESS'])
