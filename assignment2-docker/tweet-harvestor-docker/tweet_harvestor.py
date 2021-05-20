@@ -17,7 +17,7 @@ AZ_KEYS = set()
 PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
 suffix = '\"%5D&reduce=true&group=true'
-URL = 'http://admin:couchdb@couchdb:5984/'
+URL = 'http://' + os.environ['SERVER_USERNAME'] + ':' + os.environ['SERVER_PASSWORD']+ '@' + os.environ['SERVER_IP'] + ':5984/'
 DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_ADDRESS']+'/parsed-tweets/_design/mapReduce/_view/dup_count'
 DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
 
@@ -139,7 +139,7 @@ def tweepy_stream_initializer(consumer_key, consumer_secret, access_token, acces
             pass
 
 # Connect CouchDB server
-def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
+def couchdb_initializer():
     try:
         server = Server(url=URL)
         try:
@@ -157,13 +157,13 @@ def couchdb_initializer(couchdb_username, couchdb_password, couchdb_address):
         raise
 
 # Entry point
-def run(consumer_key, consumer_secret, access_token, access_token_secret, couchdb_username, couchdb_password, couchdb_address):
+def run(consumer_key, consumer_secret, access_token, access_token_secret):
     time.sleep(30)
-    db = couchdb_initializer(couchdb_username, couchdb_password, couchdb_address)
+    db = couchdb_initializer()
     couchdb.design.ViewDefinition.sync(DupCount(), db)
     logger.log("Connected to CouchDB server.")
     callSync(db)
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
 
 if __name__ == '__main__':
-    run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'], os.environ['SERVER_USERNAME'], os.environ['SERVER_PASSWORD'], os.environ['SERVER_ADDRESS'])
+    run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'])

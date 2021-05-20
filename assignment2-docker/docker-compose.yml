@@ -16,4 +16,4 @@ services:
             ACESS_TOKEN_SECRET: tkBMa3PLjhz1LFucCofZWF88G9EdwZ8iriZ7sGhA6gBq7
             SERVER_USERNAME: admin
             SERVER_PASSWORD: couchdb
-            SERVER_ADDRESS: "http://couchdb:5984"
+            SERVER_IP: couchdb
