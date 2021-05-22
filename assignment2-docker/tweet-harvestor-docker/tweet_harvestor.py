@@ -18,7 +18,7 @@ PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
 suffix = '\"%5D&reduce=true&group=true'
 URL = 'http://' + os.environ['SERVER_USERNAME'] + ':' + os.environ['SERVER_PASSWORD']+ '@' + os.environ['SERVER_IP'] + ':5984/'
-DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_ADDRESS']+'/parsed-tweets/_design/mapReduce/_view/dup_count'
+DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_IP'] + ':5984/' +'parsed-tweets/_design/mapReduce/_view/dup_count'
 DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
 
 
@@ -49,9 +49,6 @@ class CouchStreamListener(tweepy.StreamListener):
                 if not resp:
                     self.db.save(ftweet)
                     callSync(self.db)
-
-            else:
-                logger.log("New invalid tweet: {}".format(json_data["text"]))
 
 
 def callSync(db):
