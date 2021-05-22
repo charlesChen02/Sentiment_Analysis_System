@@ -151,11 +151,5 @@ class SentiByCityAndDate(CouchView):
     '''
 
     reduce = '''
-        function (keys, values, rereduce) {
-          if (rereduce) {
-            return sum(values);
-          } else {
-            return sum(values);
-          }
-        }
+        _stats
     '''
