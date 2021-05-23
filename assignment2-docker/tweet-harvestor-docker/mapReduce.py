@@ -75,7 +75,7 @@ class PositiveSentimentPerCity(CouchView):
     map = '''
     function (doc) {
         if (doc['polarity'] > 0 && doc['polarity'] < 0.5) {
-            emit(doc['location'], 1);
+            emit([doc['state'],doc['city']], 1);
         }
     }       
     '''
@@ -90,7 +90,7 @@ class NegativeSentimentPerCity(CouchView):
     map = '''
     function (doc) {
         if (doc['polarity'] < 0 && doc['polarity'] > -0.5) {
-            emit(doc['location'], 1);
+            emit([doc['state'],doc['city']], 1);
         }
     }       
     '''
@@ -103,7 +103,7 @@ class StrongNegativeSentimentPerCity(CouchView):
     map = '''
     function (doc) {
         if (doc['polarity'] <= -0.5) {
-            emit(doc['location'], 1);
+            emit([doc['state'],doc['city']], 1);
         }
     }       
     '''
@@ -117,7 +117,7 @@ class StrongPositiveSentimentPerCity(CouchView):
     map = '''
     function (doc) {
         if (doc['polarity'] >= 0.5) {
-            emit(doc['location'], 1);
+            emit([doc['state'],doc['city']], 1);
         }
     }       
     '''
@@ -132,7 +132,7 @@ class NeutralSentimentPerCity(CouchView):
     map = '''
     function (doc) {
         if (doc['polarity'] == 0) {
-            emit(doc['location'], 1);
+            emit([doc['state'],doc['city']], 1);
         }
     }       
     '''
