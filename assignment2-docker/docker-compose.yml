@@ -17,3 +17,14 @@ services:
             SERVER_USERNAME: admin
             SERVER_PASSWORD: couchdb
             SERVER_IP: couchdb
+
+    flask:
+        build: flask-docker
+        restart: always
+        ports: 
+            - "80:5000"
+        volumes:
+            - ./flask-docker
+        environment:
+            SERVER_IP: couchdb
+            COUCHDB_AUTH_TOKEN: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==
