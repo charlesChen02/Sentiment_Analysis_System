@@ -11,6 +11,7 @@ Reminder: structure of JSON
 "sentiment": {"polarity": 0.0, "subjectivity": 0.0}}
 '''
 
+
 class DupCount(CouchView):
     map = '''
     function (doc) {
@@ -21,6 +22,7 @@ class DupCount(CouchView):
     reduce = '''
         _count
     '''
+
 
 class CountTotal(CouchView):
 
@@ -58,6 +60,8 @@ class OverallSentiments(CouchView):
     reduce = '''
         _stats
     '''
+
+
 class OverallStateSentiments(CouchView):
 
     map = '''
@@ -70,12 +74,12 @@ class OverallStateSentiments(CouchView):
     '''
 
 
-class PositiveSentimentPerCity(CouchView):
+class PositiveSentimentPerState(CouchView):
 
     map = '''
     function (doc) {
         if (doc['polarity'] > 0 && doc['polarity'] < 0.5) {
-            emit(doc['location'], 1);
+            emit(doc['state'], 1);
         }
     }       
     '''
@@ -85,12 +89,12 @@ class PositiveSentimentPerCity(CouchView):
     '''
 
 
-class NegativeSentimentPerCity(CouchView):
+class NegativeSentimentPerState(CouchView):
 
     map = '''
     function (doc) {
         if (doc['polarity'] < 0 && doc['polarity'] > -0.5) {
-            emit(doc['location'], 1);
+            emit(doc['state'], 1);
         }
     }       
     '''
@@ -98,12 +102,14 @@ class NegativeSentimentPerCity(CouchView):
     reduce = '''
         _sum
     '''
-class StrongNegativeSentimentPerCity(CouchView):
+
+
+class StrongNegativeSentimentPerState(CouchView):
 
     map = '''
     function (doc) {
         if (doc['polarity'] <= -0.5) {
-            emit(doc['location'], 1);
+            emit(doc['state'], 1);
         }
     }       
     '''
@@ -112,12 +118,13 @@ class StrongNegativeSentimentPerCity(CouchView):
         _sum
     '''
 
-class StrongPositiveSentimentPerCity(CouchView):
+
+class StrongPositiveSentimentPerState(CouchView):
 
     map = '''
     function (doc) {
         if (doc['polarity'] >= 0.5) {
-            emit(doc['location'], 1);
+            emit(doc['state'], 1);
         }
     }       
     '''
@@ -127,12 +134,12 @@ class StrongPositiveSentimentPerCity(CouchView):
     '''
 
 
-class NeutralSentimentPerCity(CouchView):
+class NeutralSentimentPerState(CouchView):
     """ Count the number of documents available, per type. """
     map = '''
     function (doc) {
         if (doc['polarity'] == 0) {
-            emit(doc['location'], 1);
+            emit(doc['state'], 1);
         }
     }       
     '''
@@ -140,6 +147,7 @@ class NeutralSentimentPerCity(CouchView):
     reduce = '''
         _sum
     '''
+
 
 
 class SentiByCityAndDate(CouchView):
