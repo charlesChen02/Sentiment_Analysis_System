@@ -6,12 +6,12 @@ import requests
 
 
 
-coubdb_auth_token =  os.environ['COUCHDB_AUTH_TOKEN']
-coudb_ip = os.environ['SERVER_IP']
+# coubdb_auth_token =  os.environ['COUCHDB_AUTH_TOKEN']
+# coudb_ip = os.environ['SERVER_IP']
 
 
-# coubdb_auth_token =  'YWRtaW46Y291Y2hkYg=='
-# coudb_ip = '127.0.0.1'
+coubdb_auth_token =  'YWRtaW46Y291Y2hkYg=='
+coudb_ip = '127.0.0.1'
 
 headers = {
     'Content-Type': 'application/json',
@@ -29,27 +29,27 @@ def get_overall_sentiment():
     return response.json()
 
 def get_positive_sentiment():
-    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/positive_sentiment_per_city".format(coudb_ip)
+    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/positive_sentiment_per_state".format(coudb_ip)
     response = requests.request("GET", url, headers=headers)
     return response.json()
 
 def get_negative_sentiment():
-    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/negative_sentiment_per_city".format(coudb_ip)
+    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/negative_sentiment_per_state".format(coudb_ip)
     response = requests.request("GET", url, headers=headers)
     return response.json()
 
 def get_neutral_sentiment():
-    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/neutral_sentiment_per_city".format(coudb_ip)
+    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/neutral_sentiment_per_state".format(coudb_ip)
     response = requests.request("GET", url, headers=headers)
     return response.json()
 
 def get_strong_negative_sentiment():
-    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/strong_negative_sentiment_per_city".format(coudb_ip)
+    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/strong_negative_sentiment_per_state".format(coudb_ip)
     response = requests.request("GET", url, headers=headers)
     return response.json()
 
 def get_strong_positive_sentiment():
-    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/strong_positive_sentiment_per_city".format(coudb_ip)
+    url = "http://{}:5984/parsed-tweets/_design/mapReduce/_view/strong_positive_sentiment_per_state".format(coudb_ip)
     response = requests.request("GET", url, headers=headers)
     return response.json()
 
