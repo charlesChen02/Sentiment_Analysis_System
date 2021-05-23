@@ -64,6 +64,7 @@ def callSync(db):
         StrongPositiveSentimentPerCity(),
         StrongNegativeSentimentPerCity(),
         OverallStateSentiments(),
+        StateSentiment(),
         # Put other view classes here
     ]
     couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
