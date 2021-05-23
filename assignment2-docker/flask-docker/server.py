@@ -96,7 +96,7 @@ def get_state_sentiment():
 
     return {key:(math.ceil(rescaling(-1,1,0,100,value['sum']/value['count'])) if value['count']!=0 else 50) for key, value in intermediate_data.items()}
 
-server = Flask(__name__, static_url_path='', static_folder='Client/build')
+server = Flask(__name__, static_url_path='', static_folder='./Client/build')
 api = Api(server)
 
 # helper functions
@@ -152,4 +152,4 @@ def insightsDoubleClick():
     })
 
 if __name__ == '__main__':
-    server.run(port=5000, debug=True, host="0.0.0.0")
+    server.run(port=5000, debug=True,host="0.0.0.0")

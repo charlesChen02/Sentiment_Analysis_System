@@ -22,10 +22,10 @@ services:
         build: flask-docker
         restart: always
         ports: 
-            - "80:5000"
-        volumes:
-            - ./flask-docker
+            - "5000:5000"
+        # volumes:
+        #     - ./flask-docker
         environment:
             SERVER_IP: couchdb
-            #COUCHDB_AUTH_TOKEN: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==
-            COUCHDB_AUTH_TOKEN: YWRtaW46Y291Y2hkYg==
+            COUCHDB_AUTH_TOKEN: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==
+            #COUCHDB_AUTH_TOKEN: YWRtaW46Y291Y2hkYg==
