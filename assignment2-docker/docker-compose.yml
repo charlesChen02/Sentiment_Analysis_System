@@ -27,4 +27,4 @@ services:
             - ./flask-docker
         environment:
             SERVER_IP: couchdb
-            COUCHDB_AUTH_TOKEN: YWRtaW46Y291Y2hkYg==
+            COUCHDB_AUTH_TOKEN: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==
