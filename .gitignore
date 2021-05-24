@@ -1,5 +1,6 @@
 .DS_Store
 .env
+assignment2.cer
 keys_tokens.json
 formattedTweets.json
 __pycache__
