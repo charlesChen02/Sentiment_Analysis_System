@@ -1,0 +1,17 @@
+- hosts: all_nodes
+  vars_files:
+      - host_vars/variables.yaml
+
+  gather_facts: true
+  
+  vars:
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_user: ubuntu
+      ansible_ssh_private_key_file: assignment2.cer
+      ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+      current_ip: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
+  
+  roles:
+    - role: vm_config
+    - role: couchdb_cluster
+    - role: app

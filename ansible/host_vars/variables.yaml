@@ -1,0 +1,73 @@
+availability_zone: melbourne-qh2-uom
+
+volumes:
+  - vol_name: vol-1
+    vol_size: 100
+  - vol_name: vol-2
+    vol_size: 100
+  - vol_name: vol-3
+    vol_size: 100
+  - vol_name: vol-4
+    vol_size: 100
+
+
+security_groups:  
+  - name: ssh
+    description: "ssh"
+    protocol: tcp
+    port_range_min: 22
+    port_range_max: 22
+    remote_ip_prefix: 0.0.0.0/0
+
+  - name: http
+    description: "http"
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+    remote_ip_prefix: 0.0.0.0/0
+  
+  - name: couchdb-1
+    description: "couchdb HTTP API"
+    protocol: tcp
+    port_range_min: 5984
+    port_range_max: 5984
+    remote_ip_prefix: 0.0.0.0/0
+
+  
+  - name: couchdb-2
+    description: "couchdb Erlang port mapper daemon"
+    protocol: tcp
+    port_range_min: 4369
+    port_range_max: 4369
+    remote_ip_prefix: 0.0.0.0/0
+
+  - name: couchdb-3
+    description: "couchdb node communication"
+    protocol: tcp
+    port_range_min: 3000
+    port_range_max: 3000
+    remote_ip_prefix: 0.0.0.0/0
+
+instances: 
+  - name: instance-1 
+    volumes: 
+    - vol-1
+  - name: instance-2
+    volumes:
+    - vol-2
+  - name: instance-3
+    volumes:
+    - vol-3
+  - name: instance-4
+    volumes:
+    - vol-4
+
+instance_image: f8b79936-6616-4a22-b55d-0d0a1d27bceb
+instance_key_name: assignment2 
+instance_flavor: uom.mse.1c4g
+
+ip_list: []
+
+couch_usr: efwefwefewewr3
+couch_pwd: i392fb39fb293fbjnnl
+couch_auth: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==

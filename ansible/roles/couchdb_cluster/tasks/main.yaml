@@ -1,0 +1,136 @@
+---
+
+- name: Get self and coordination ip
+  set_fact:
+      self_ip: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+      coordination_ip: "{{ hostvars[groups['all_nodes'][0]]['ansible_default_ipv4']['address'] }}"
+      node_count: "{{ instances|length }}"
+      start_cmd: docker run --name couchdb -it
+
+- name: Write cluster setup script
+  become: yes
+  blockinfile:
+      dest: /cluster_setup.sh
+      create: yes
+      block: |
+           #!/bin/bash
+           sed -i '1s/^/-name couchdb@{{ self_ip }}\n/' /opt/couchdb/etc/vm.args
+           sed -i '2s/^/-setcookie ccc_ass2_pwd\n/' /opt/couchdb/etc/vm.args
+           sed -i "s/-kernel inet_dist_listen_min.*$/-kernel inet_dist_listen_min 3000/" /opt/couchdb/etc/vm.args
+           sed -i "s/-kernel inet_dist_listen_max.*$/-kernel inet_dist_listen_max {{ 2999 + instances|length }}/" /opt/couchdb/etc/vm.args
+           
+
+- name: Write setup script for setup coordination server
+  become: yes
+  blockinfile:
+      dest: /setup_coordination_{{ item|int }}.sh
+      create: yes
+      block: |
+           #!/bin/bash
+           sleep 5s
+           curl -sX POST -H "Content-Type: application/json" http://{{ couch_usr }}:{{ couch_pwd }}@{{ coordination_ip }}:5984/_cluster_setup -d '{"action": "enable_cluster", "bind_address":"0.0.0.0", "username": "{{ couch_usr }}", "password":"{{ couch_pwd }}", "port": 5984, "node_count": "{{ node_count }}", "remote_node": "{{ hostvars[groups['all_nodes'][item]]['ansible_default_ipv4']['address'] }}", "remote_current_user": "{{ couch_usr }}", "remote_current_password": "{{ couch_pwd }}" }'
+           sleep 5s
+           curl -sX POST -H "Content-Type: application/json" http://{{ couch_usr }}:{{ couch_pwd }}@{{ coordination_ip }}:5984/_cluster_setup -d '{"action": "add_node", "host":"{{ hostvars[groups['all_nodes'][item]]['ansible_default_ipv4']['address'] }}", "port": 5984, "username": "{{ couch_usr }}", "password":"{{ couch_pwd }}"}'
+  loop: "{{ range(1,node_count|int)|list }}"
+  when: self_ip  == coordination_ip
+
+
+- name: couchdb, ports to open
+  set_fact: 
+      start_cmd: "{{start_cmd +  ' -p ' + '3000' + item|string + ':' + '3000' + item|string }}" 
+  loop: "{{ range(0, node_count|int)|list }}"  
+
+- set_fact: 
+      start_cmd: "{{ start_cmd + ' -p 5984:5984 -p 4369:4369' }}"
+
+- set_fact:
+      start_cmd: "{{ start_cmd  + ' -e COUCHDB_USER=' + couch_usr + ' -e COUCHDB_PASSWORD=' + couch_pwd + ' -v vdb:/opt/couchdb/data -v /couchdb_local_d:/opt/couchdb/etc/local.d' + ' -d --restart=always couchdb:latest'}}"
+
+- debug: var=start_cmd
+
+- name: Delete all containers 
+  become: yes
+  shell:
+    cmd: docker rm -f $(docker ps -a)
+  ignore_errors: yes
+
+- name: Create docker volume 'vdb'
+  become: yes
+  shell:
+    cmd: docker volume create --opt type=ext4 --opt device=/dev/vdb vdb
+
+- name: Fire up couchdb container
+  become: yes
+  shell:
+    cmd: "{{start_cmd}}"
+
+- become: yes
+  shell:
+    cmd: docker cp /cluster_setup.sh couchdb:/cluster_setup.sh
+
+- become: yes
+  shell:
+    cmd: docker cp /setup_coordination_{{item}}.sh couchdb:/setup_coordination_{{item}}.sh
+  loop: "{{ range(1,node_count|int)|list }}"
+  when: self_ip  == coordination_ip 
+
+- become: yes
+  shell:
+    cmd: docker exec -d couchdb chmod +x /cluster_setup.sh
+
+- name: Modify vm.args inside the couchdb containers
+  become: yes
+  shell:
+    cmd: docker exec -it couchdb /bin/bash -c '/cluster_setup.sh'
+  ignore_errors: yes
+
+
+- name: copy ini in local.d to remote
+  become: yes
+  copy:
+    src: "./couch_config.ini"
+    dest: "/couchdb_local_d/"
+
+
+- name: Restarting coucbdb containers
+  become: yes
+  shell:
+    cmd: docker restart couchdb
+
+- name: Cluster setup API, 'enable_cluster'
+  become: yes
+  shell:
+    cmd: docker exec -d couchdb curl -X POST -H "Content-Type:application/json" http://{{ couch_usr }}:{{ couch_pwd }}@127.0.0.1:5984/_cluster_setup -d '{"action":"enable_cluster", "bind_address":"0.0.0.0", "username":"{{ couch_usr }}", "password":"{{ couch_pwd }}", "node_count":"{{ node_count }}"}'
+
+- pause:
+    minutes: 1
+
+- become: yes
+  shell:
+    cmd: docker exec -d couchdb chmod +x /setup_coordination_{{item}}.sh 
+  loop: "{{ range(1,node_count|int)|list }}"
+  when: self_ip  == coordination_ip  
+
+- become: yes
+  ignore_errors: yes
+  shell:
+    cmd: docker exec -it couchdb /bin/bash -c '/setup_coordination_{{item}}.sh'
+  loop: "{{ range(1,node_count|int)|list }}"
+  when: self_ip  == coordination_ip
+
+- pause:
+    minutes: 1
+
+- name: Finish_cluster
+  become: yes
+  shell:
+    cmd: docker exec -d couchdb curl -X POST -H "Content-Type:application/json" http://{{ couch_usr }}:{{ couch_pwd }}@{{ coordination_ip }}:5984/_cluster_setup -d '{"action":"finish_cluster"}'
+  when: self_ip  == coordination_ip
+
+- become: yes
+  shell:
+    cmd: docker exec -it couchdb curl http://{{ couch_usr }}:{{ couch_pwd }}@{{ coordination_ip }}:5984/_membership
+  when: self_ip  == coordination_ip
+  register: cluster_membership
+
+- debug: var=cluster_membership

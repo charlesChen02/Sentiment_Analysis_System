@@ -1,0 +1,183 @@
+---
+
+## Mounts volumes
+- name: Create a ext4 filesystem on /dev/vdb
+  become: yes
+  filesystem:
+    fstype: ext4
+    dev: /dev/vdb
+
+- name: Mount /dev/vdb
+  become: yes
+  mount:
+    path: /volume
+    src: /dev/vdb
+    fstype: ext4
+    state: mounted
+
+- name: create corresponding folder if not exists
+  become: yes
+  file:
+    path: /volume/couchdb/{{ item }}
+    state: directory
+    mode: '0755'
+  with_items:
+    - ["data", "local.d"]
+
+- set_fact: 
+     server_ips: "{{ hostvars[groups['all_nodes'][0]]['ansible_default_ipv4']['address'] }}"
+
+- set_fact:
+     server_ips: "{{ server_ips + ',' + hostvars[groups['all_nodes'][item]]['ansible_default_ipv4']['address'] }}"
+  loop: "{{ range(1,instances|length)|list }}"
+
+- debug: var=server_ips
+
+- name: Add proxy file
+  become: yes
+  blockinfile:
+     dest: /etc/environment
+     create: yes
+     marker: ""
+     block: |
+        HTTP_PROXY=http://wwwproxy.unimelb.edu.au:8000/
+        HTTPS_PROXY=http://wwwproxy.unimelb.edu.au:8000/    
+        http_proxy=http://wwwproxy.unimelb.edu.au:8000/
+        https_proxy=http://wwwproxy.unimelb.edu.au:8000/ 
+        no_proxy=localhost,127.0.0.1,localaddress,172.16.0.0/12,.melbounre.rc.nectar.org.au,.storage.unimelb.edu.au,.cloud.unimelb.edu.au,{{ server_ips }},172.17.0.1,node0,node1,node2,node3
+         
+- name: Reboot machines
+  become: yes
+  reboot:
+    reboot_timeout: 600
+
+
+##Install Docker and configure proxy for Docker
+- name: Install pip
+  become: yes
+  apt:
+    name: ['python3-pip']
+    state: latest
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+
+- name: Update pip
+  become: yes
+  pip:
+    name: ['pip']
+    state: latest
+
+- name: Uninstall old versions of docker
+  tags: 'docker'
+  become: yes
+  apt:
+    name: ['docker', 'docker-engine', 'docker.io']
+    state: absent
+
+- name: Install dependencies
+  tags: 'docker'
+  become: yes
+  apt:
+    name: ['apt-transport-https', 'ca-certificates', 'curl', 'python-setuptools', 'software-properties-common']
+    state: latest
+    install_recommends: no
+    update_cache: yes
+
+- name: Add Docker apt repository key
+  tags: 'docker'
+  become: yes
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker apt repository and update apt cache
+  tags: 'docker'
+  become: yes
+  apt_repository:
+    repo: "deb https://download.docker.com/linux/{{ ansible_distribution|lower }} {{ ansible_distribution_release }} stable"
+    mode: '644'
+    update_cache: yes
+    state: present
+
+- name: Install docker
+  tags: 'docker'
+  become: yes
+  apt:
+    name: ['docker-ce']
+    state: latest
+    install_recommends: no
+    update_cache: yes
+    
+- name: Install docker-compose
+  tags: 'docker'
+  become: yes
+  pip:
+    name: ['docker-compose']
+ 
+
+## Docker HTTP proxy
+- become: yes
+  file: 
+     path: /etc/systemd/system/docker.service.d/
+     state: directory
+
+- name: Remove file (delete file)
+  become: yes 
+  file:
+    path: /etc/systemd/system/docker.service.d/http-proxy.conf
+    state: absent
+
+- name: docker.service.d
+  become: yes
+  blockinfile: 
+     dest: /etc/systemd/system/docker.service.d/http-proxy.conf
+     create: yes
+     marker: ""
+     block: |
+        [Service]
+        Environment = "HTTP_PROXY=http://wwwproxy.unimelb.edu.au:8000"
+        Environment = "HTTPS_PROXY=http://wwwproxy.unimelb.edu.au:8000"
+        Environment = "NO_PROXY=localhost,127.0.0.1,localaddress,172.16.0.0/12,.melbounre.rc.nectar.org.au,.storage.unimelb.edu.au,.cloud.unimelb.edu.au,{{ server_ips }},172.17.0.1"
+
+- become: yes 
+  file:
+    path: ~/.docker/config.json
+    state: absent
+
+- become: yes
+  lineinfile:
+    path: ~/.docker/config.json
+    create: yes
+    line: '{'
+   
+- name: Docker proxy setup
+  become: yes
+  blockinfile:
+     dest: ~/.docker/config.json
+     create: yes
+     marker: ""
+     block: |
+            "proxies":
+                {
+                      "default":
+                             {
+                                 "httpProxy": "http://wwwproxy.unimelb.edu.au:8000",
+                                 "httpsProxy": "http://wwwproxy.unimelb.edu.au:8000",
+                                 "noProxy": "localhost,127.0.0.1,localaddress,172.16.0.0/12,.melbounre.rc.nectar.org.au,.storage.unimelb.edu.au,.cloud.unimelb.edu.au,{{ server_ips }},172.17.0.1"  
+                             }
+                }
+            }
+
+- name: Restart Docker service
+  become: yes
+  systemd:
+     name: docker
+     state: restarted
+     daemon_reload: yes
+
+
+
+
+
+

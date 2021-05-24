@@ -1,0 +1,4 @@
+---
+
+- import_playbook: instance_setup.yaml
+- import_playbook: vm_backend.yaml

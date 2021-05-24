@@ -1,0 +1,93 @@
+---
+- name: Install pip
+  become: yes
+  apt:
+    name: ['python-pip']
+    state: latest
+    update_cache: yes
+  when: ansible_distribution == "Ubuntu"
+
+- name: Update pip
+  pip:
+    name: ['pip']
+    state: latest
+
+- name: Install openstacksdk
+  pip:
+    name: ['openstacksdk']
+    state: latest
+
+- name: Create Volumes
+  os_volume:
+    display_name: '{{ item.vol_name }}'
+    size: '{{ item.vol_size }}'
+    availability_zone: '{{ availability_zone }}'
+    wait: yes
+    timeout: 600
+    state: present
+  loop: '{{ volumes }}'
+
+- name: Create security groups
+  os_security_group:
+    name: '{{ item.name }}'
+    description: '{{ item.description }}'
+    state: present
+  loop: '{{ security_groups }}'
+
+- name: Create a list of security group names
+  set_fact:
+    sg_names: '{{ sg_names|default([]) + [ item.name ] }}'
+  loop: '{{ security_groups }}'
+
+- name: Create security group rules
+  os_security_group_rule:
+    security_group: '{{ item.name }}'
+    protocol: '{{ item.protocol }}'
+    port_range_min: '{{ item.port_range_min }}'
+    port_range_max: '{{ item.port_range_max }}'
+    remote_ip_prefix: '{{ item.remote_ip_prefix }}'
+    state: present
+  loop: '{{ security_groups }}'
+
+- name: Create instances
+  os_server:
+    name: '{{ item.name }}'
+    image: '{{ instance_image }}'
+    key_name: '{{ instance_key_name }}'
+    flavor: '{{ instance_flavor }}'
+    availability_zone: '{{ availability_zone }}'
+    security_groups: '{{ sg_names }}'
+    volumes: '{{ item.volumes }}'
+    auto_floating_ip: yes
+    wait: yes
+    timeout: 600
+    state: present
+  loop: '{{ instances }}'
+  register: os_instances 
+
+- name: Retrieve ips
+  set_fact:
+    ip_list: "{{ ip_list + [[item.openstack.name] + [item.openstack.accessIPv4]] }}"
+  loop: '{{ os_instances.results }}'
+
+- ignore_errors: yes
+  file: 
+     state: absent
+     path: "./hosts"
+
+- name: Write server info to hosts file, define group name
+  lineinfile:
+   dest: "./hosts"
+   line: "[all_nodes]"
+   create: yes  
+
+- name: Write server info to hosts file
+  lineinfile:
+   dest: "./hosts"
+   line: "{{ item.0 }} ansible_host={{ item.1 }}"
+  loop: "{{ ip_list }}"
+
+- meta: refresh_inventory
+
+- pause:
+    minutes: 3
