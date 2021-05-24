@@ -146,7 +146,7 @@ def couchdb_initializer():
             db = server.create(DB_NAME)
             with open(TWEETS_PATH, 'r') as initial_tweets:
                 for line in initial_tweets:
-                    tweet = json.loads(line[:-1])
+                    tweet = json.loads(line)
                     tweet = reformattweet(tweet)
                     db.save(tweet)
         return db
@@ -156,7 +156,6 @@ def couchdb_initializer():
 
 # Entry point
 def run(consumer_key, consumer_secret, access_token, access_token_secret):
-    time.sleep(30)
     db = couchdb_initializer()
     couchdb.design.ViewDefinition.sync(DupCount(), db)
     logger.log("Connected to CouchDB server.")
@@ -164,4 +163,5 @@ def run(consumer_key, consumer_secret, access_token, access_token_secret):
     tweepy_stream_initializer(consumer_key, consumer_secret, access_token, access_token_secret, db)
 
 if __name__ == '__main__':
+    time.sleep(60)
     run(os.environ['API_KEY'], os.environ['API_SECRET_KEY'], os.environ['ACESS_TOKEN'], os.environ['ACESS_TOKEN_SECRET'])
