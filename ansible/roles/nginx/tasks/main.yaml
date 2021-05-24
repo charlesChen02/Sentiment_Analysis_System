@@ -1,0 +1,39 @@
+- name: Install Nginx
+  tags: 'nginx'
+  become: yes
+  apt:
+    name: ['nginx']
+    state: latest
+    update_cache: yes
+
+- name: configure nginx
+  tags: 'nginx'
+  become: yes
+  blockinfile: 
+     dest: /etc/nginx/conf.d/load-balancer.conf
+     create: yes
+     block: |
+      upstream webapp {
+        server {{ hostvars[groups['all_nodes'][0]]['ansible_host'] }}:5000;
+        server {{ hostvars[groups['all_nodes'][1]]['ansible_host'] }}:5000;
+        server {{ hostvars[groups['all_nodes'][2]]['ansible_host'] }}:5000;
+        server {{ hostvars[groups['all_nodes'][3]]['ansible_host'] }}:5000;
+      }
+
+      server {
+        listen 80;
+        location / {
+          proxy_pass http://webapp;
+        }
+      }
+
+- name: Remove default configuration
+  become: yes 
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: restart nginx
+  tags: 'nginx'
+  become: yes
+  shell: systemctl restart nginx

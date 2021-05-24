@@ -16,7 +16,7 @@ services:
         image: harryshen225/comp90024:flask-docker
         restart: always
         ports: 
-            - "80:5000"
+            - "5000:5000"
         environment:
             SERVER_IP: {{ current_ip }}
             COUCHDB_AUTH_TOKEN: {{ couch_auth }}
