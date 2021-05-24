@@ -1,13 +1,13 @@
 ---
 # Create VMs using openstack
-# - hosts: localhost
-#   vars_files:
-#       - host_vars/variables.yaml
-#   gather_facts: true
-#   roles:
-#       - role: openstack
+- hosts: localhost
+  vars_files:
+      - host_vars/variables.yaml
+  gather_facts: true
+  roles:
+      - role: openstack
 
-# Configure VMs, install couchdb and app in all VMs.
+# Configure VMs, install couchdb, app and nginx in all VMs.
 - hosts: all_nodes
   vars_files:
       - host_vars/variables.yaml
@@ -19,7 +19,7 @@
       ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
       current_ip: "{{hostvars[inventory_hostname]['ansible_default_ipv4']['address']}}"
   roles:
-    # - role: vm_config
-    # - role: couchdb_cluster
-    # - role: app
+    - role: vm_config
+    - role: couchdb_cluster
+    - role: app
     - role: nginx

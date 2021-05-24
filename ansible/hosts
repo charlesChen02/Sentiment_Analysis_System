@@ -1,5 +1,5 @@
 [all_nodes]
-instance-1 ansible_host=172.26.130.224
-instance-2 ansible_host=172.26.133.16
-instance-3 ansible_host=172.26.133.218
-instance-4 ansible_host=172.26.133.77
+instance-1 ansible_host=172.26.130.94
+instance-2 ansible_host=172.26.130.132
+instance-3 ansible_host=172.26.130.174
+instance-4 ansible_host=172.26.132.81

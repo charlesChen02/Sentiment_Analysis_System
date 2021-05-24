@@ -37,7 +37,7 @@
 
 - name: couchdb, ports to open
   set_fact: 
-      start_cmd: "{{start_cmd +  ' -p ' + '3000' + item|string + ':' + '3000' + item|string }}" 
+      start_cmd: "{{start_cmd +  ' -p ' + (random_ports.0 + item)|string + ':' + (random_ports.0 + item)|string }}" 
   loop: "{{ range(0, node_count|int)|list }}"  
 
 - set_fact: 

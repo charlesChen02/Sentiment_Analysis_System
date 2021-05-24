@@ -33,19 +33,11 @@ security_groups:
     port_range_max: 5984
     remote_ip_prefix: 0.0.0.0/0
 
-  
   - name: couchdb-2
     description: "couchdb Erlang port mapper daemon"
     protocol: tcp
     port_range_min: 4369
     port_range_max: 4369
-    remote_ip_prefix: 0.0.0.0/0
-
-  - name: couchdb-3
-    description: "couchdb node communication"
-    protocol: tcp
-    port_range_min: 3000
-    port_range_max: 3000
     remote_ip_prefix: 0.0.0.0/0
 
   - name: webapp
@@ -69,6 +61,7 @@ instances:
     volumes:
     - vol-4
 
+random_ports: [3000, 3001, 3002, 3003]
 instance_image: f8b79936-6616-4a22-b55d-0d0a1d27bceb
 instance_key_name: assignment2 
 instance_flavor: uom.mse.1c4g
