@@ -69,7 +69,8 @@ def get_state_sentiment():
         'Western Australia':{'sum':0,'count':0},
         'Queensland':{'sum':0,'count':0},
         'South Australia':{'sum':0,'count':0},
-        'Northern Territory':{'sum':0,'count':0}
+        'Northern Territory':{'sum':0,'count':0},
+        'Tasmania':{'sum':0,'count':0}
     }
     print(list(intermediate_data.keys()))
     for record in data:
