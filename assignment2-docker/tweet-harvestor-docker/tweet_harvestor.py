@@ -159,6 +159,7 @@ def couchdb_initializer():
             db = server[DB_NAME]
         except:
             db = server.create(DB_NAME)
+            callSync(db)
             with open(TWEETS_PATH, 'r') as initial_tweets:
                 for line in initial_tweets:
                     tweet = json.loads(line)
