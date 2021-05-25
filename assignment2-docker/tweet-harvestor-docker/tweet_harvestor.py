@@ -13,8 +13,8 @@ GEOBOX_AUSTRALIA = [112.34,-44.04,153.98,-10.41]
 KEYWORD_RE = r'( az )|(astrazeneca)|(pfizer)|(novavax)|(vaccination)|(vaccine)|(vaccinate)|(vaccinated)|( dose )|(booster)|( jab )|(inoculation)|(immunisation)|(immunization)'
 logger = Logger("tweet_harvestor")
 NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
-AZ_KEYS = set()
-PZ_KEYS = set()
+AZ_KEYS = {"az","astrazeneca"}
+PZ_KEYS = {"pfizer"}
 DB_NAME = "parsed-tweets"
 
 URL = 'http://' + os.environ['SERVER_USERNAME'] + ':' + os.environ['SERVER_PASSWORD']+ '@' + os.environ['SERVER_IP'] + ':5984/'
@@ -61,6 +61,8 @@ def callSync(db):
         StrongNegativeSentimentPerState(),
         OverallStateSentiments(),
         StateSentiment(),
+        pzView(),
+        azView(),
         # Put other view classes here
     ]
     couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
@@ -111,6 +113,12 @@ def reformattweet(tweet):
 
     # keywords evaluation
     ftweet['tags'] = []
+    # for w in PZ_KEYS:
+    #     if w in ftweet['text']:
+    #         ftweet['tags'].append("PZ")
+    # for w in AZ_KEYS:
+    #     if w in ftweet['text']:
+    #         ftweet['tags'].append('AZ')
     words = ftweet['text'].split()
     for w in words:
         if w in AZ_KEYS:

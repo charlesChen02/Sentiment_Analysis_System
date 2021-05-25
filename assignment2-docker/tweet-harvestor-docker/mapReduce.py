@@ -173,3 +173,28 @@ class StateSentiment(CouchView):
     reduce = '''
         _stats
     '''
+
+class azView(CouchView):
+    map = '''
+    function (doc) {
+  if (!(doc['tags'].includes('AZ'))) {
+      emit(doc['state'], doc['polarity']);
+  }
+}   
+    '''
+    reduce = '''
+            _stats
+        '''
+
+
+class pzView(CouchView):
+    map = '''
+    function (doc) {
+  if (!(doc['tags'].includes('PZ'))) {
+      emit(doc['state'], doc['polarity']);
+  }
+}
+'''
+    reduce = '''
+            _stats
+        '''
