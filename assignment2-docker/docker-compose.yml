@@ -10,10 +10,10 @@ services:
         build: tweet-harvestor-docker
         restart: always
         environment: 
-            API_KEY: fote8GtC3mCBc34c736uWhZ38
-            API_SECRET_KEY: 0dyh87kkxw6DildE5ZM0FkDHE1x9hghTWR1yq4xmo39hXBOcgV
-            ACESS_TOKEN: 1390939348493737986-V9Lddu48cRYEzvyJyUCaLtRnGiCvgx
-            ACESS_TOKEN_SECRET: tkBMa3PLjhz1LFucCofZWF88G9EdwZ8iriZ7sGhA6gBq7
+            API_KEY: xltG4HvdQzsRUlObmjJYdewx8
+            API_SECRET_KEY: 06TWFbHup9dgNEMR0izqxdNVYHFZ461UFIzwbuL1thHYzBit9h
+            ACESS_TOKEN: 2207370697-TeOgxlvJJfdR6GeygOIu2B9NiJP47AXB2jFtxY5
+            ACESS_TOKEN_SECRET: Ty7KDfVbfuXxcTKwOaizIIP1rjn2orYlH32w6Gx72tQWF
             SERVER_USERNAME: admin
             SERVER_PASSWORD: couchdb
             SERVER_IP: couchdb
@@ -23,9 +23,6 @@ services:
         restart: always
         ports: 
             - "5000:5000"
-        # volumes:
-        #     - ./flask-docker
         environment:
             SERVER_IP: couchdb
             COUCHDB_AUTH_TOKEN: ZWZ3ZWZ3ZWZld2V3cjM6aTM5MmZiMzlmYjI5M2Ziam5ubA==
-            #COUCHDB_AUTH_TOKEN: YWRtaW46Y291Y2hkYg==
