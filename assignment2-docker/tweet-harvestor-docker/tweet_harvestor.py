@@ -16,12 +16,12 @@ NECESSARY_CONTENTS = ["id_str", "created_at", "text", "timestamp_ms", "place"]
 AZ_KEYS = set()
 PZ_KEYS = set()
 DB_NAME = "parsed-tweets"
-suffix = '\"%5D&reduce=true&group=true'
+
 URL = 'http://' + os.environ['SERVER_USERNAME'] + ':' + os.environ['SERVER_PASSWORD']+ '@' + os.environ['SERVER_IP'] + ':5984/'
-DUP_VIEW_ADDR = 'http://'+  os.environ['SERVER_USERNAME'] + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_IP'] + ':5984/' +'parsed-tweets/_design/mapReduce/_view/dup_count'
-DUP_ACT_GETIDSTR = DUP_VIEW_ADDR + '?keys=%5B\"'
+DUP_VIEW_ADDR = 'http://'+ os.environ['SERVER_USERNAME'] +':' + os.environ['SERVER_PASSWORD']+'@'+ os.environ['SERVER_IP'] + \
+                ":5984/parsed-tweets/_design/mapReduce/_view/dup_count?keys=%5B\""
 
-
+suffix = "\"%5D&reduce=true&group=true"
 
 
 # Subclass StreamListener
@@ -42,11 +42,7 @@ class CouchStreamListener(tweepy.StreamListener):
 
                 ftweet = reformattweet(json_data)
 
-                # duplication avoidance
-                dup_url = DUP_ACT_GETIDSTR + ftweet['id_str'] + suffix
-                r = requests.get(url=dup_url)
-                resp = dict(r.json())['rows']
-                if not resp:
+                if not isDuplicated(ftweet['id_str']):
                     self.db.save(ftweet)
                     callSync(self.db)
 
@@ -69,7 +65,18 @@ def callSync(db):
     ]
     couchdb.design.ViewDefinition.sync_many(db, couch_views, remove_missing=True)
 
-
+def isDuplicated(s):
+    # duplication avoidance
+    dup_url = DUP_VIEW_ADDR + s + suffix
+    r = requests.get(url=dup_url)
+    try:
+        resp = dict(r.json())['rows']
+    except:
+        print("not Found")
+        return False
+    if not resp:
+        return False
+    return True
 
 def reformattweet(tweet):
     ftweet = {}
