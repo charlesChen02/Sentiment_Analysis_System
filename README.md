@@ -7,7 +7,7 @@
 ![Dashboard Layout](./drawings/interactive_dashboard.png)
 
 ### Click through
-[details](./drawings/application_screenshots/Insight_doubleclick/COMP90024_Team_64.png)
+![details](./drawings/application_screenshots/Insight_doubleclick/COMP90024_Team_64.png)
 
 ### Sentiment Distribution Illustration
 ![distribution](./drawings/application_screenshots/Insigtht_Overview/Sentiment_distribution.png)
