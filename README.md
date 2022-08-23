@@ -1,16 +1,25 @@
-# COMP90024_Team64_Assignment2
+# Sentiment_Analysis_System
 
 ## 1. Software Architecture
-![Alt text](./drawings/COMP90024_Architecture.png)
 
-## 2. Work Distrubution
+### Dashboard
+![Dashboard Layout](./drawings/dashboard_layout.png)
+![Dashboard Layout](./drawings/interactive_dashboard.png)
 
-| **Main Tasks**        	| chaoyinc 	| Harry   	| Chinmayee 	| yisur   	| jiaqi   	|
-|-----------------------	|----------	|---------	|-----------	|---------	|---------	|
-| Frontend(client Side) 	|          	| Primary 	|           	|         	|         	|
-| Flask(framework/MVC)  	| Primary  	|         	|           	|         	|         	|
-| Tweet Havester        	|          	| Primary 	|           	|         	|         	|
-| Tweet Parser          	|          	|         	|           	|         	| Primary 	|
-| Analytics Engine      	| Primary  	|         	| Primary   	|         	|         	|
-| Counch DB             	|          	|         	| Support   	| Primary 	|         	|
-| Deployment            	|          	|         	|           	|         	| Primary 	|
+### Click through
+[details](./drawings/application_screenshots/Insight_doubleclick/COMP90024_Team_64.png)
+
+### Sentiment Distribution Illustration
+![distribution](./drawings/application_screenshots/Insigtht_Overview/Sentiment_distribution.png)
+![distribution over time](./drawings/application_screenshots/Insigtht_Overview/Sentiment_vs_vaccination.png)
+![](./drawings/application_screenshots/Insigtht_Overview/time_series_sentiment.png)
+
+
+
+## Contributors
+
+- Chaoyin: Flask(framework/MVC), Analytics Engine 
+- Harry: Frontend(client Side), Tweet Havester
+- Chinmayee: Analytics Engine, Counch DB
+- yisur: Counch DB
+- jiaqi: Tweet Parser, Deployment
